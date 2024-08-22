@@ -1,84 +1,53 @@
-# Traffic Flow Prediction System Using LSTM with Interactive Road and Date Selection
+# Traffic Flow Prediction Using LSTM
 
-## Overview
+## Project Introduction
 
-This project aims to predict traffic flow on different roads using a Long Short-Term Memory (LSTM) model. The system allows users to interactively select a specific road and date, then provides a traffic flow prediction based on historical data. The model is deployed as a web application using Streamlit.
+In this project, the goal is to develop a Long Short-Term Memory (LSTM) model to predict traffic flow across different roads. With increasing traffic congestion in urban areas, accurate traffic predictions can significantly enhance traffic management systems by optimizing routes and reducing congestion.
 
-## Features
+## Dataset Overview
 
-- **Road Selection**: Users can choose from 36 different roads for traffic flow prediction.
-- **Date Input**: Users can specify a date for prediction in the format `YYYY-MM-DD`.
-- **Real-time Prediction**: The application processes the selected data and outputs the predicted traffic flow.
-- **Interactive Interface**: The web application is built using Streamlit, offering a simple and user-friendly interface.
-- **Logging**: User interactions and system events are logged for monitoring and debugging purposes.
+The dataset for this project consists of historical traffic flow data collected from 36 different roads. Each road has its own set of CSV files, with traffic data recorded over time. This time-series data is crucial for understanding traffic patterns and making accurate predictions.
 
-## Installation
+### Structure
 
-### Prerequisites
+- **Road Data**: The dataset includes traffic flow data indexed by road location and date.
+- **Format**: Data is stored in CSV files, each corresponding to a specific road and date.
 
-- Python 3.7+
-- Pip (Python package installer)
+## Objective
 
-### Step-by-Step Installation
+The primary objective of this project is to build an LSTM model that can accurately predict traffic flow for a given road and date. This prediction can be used to anticipate traffic conditions, helping to manage traffic more effectively and reduce congestion.
 
-1. **Clone the Repository**:
-    ```bash
-    git clone https://github.com/yourusername/traffic-flow-prediction.git
-    cd traffic-flow-prediction
-    ```
+## Methodology
 
-2. **Create a Virtual Environment (optional but recommended)**:
-    ```bash
-    python3 -m venv env
-    source env/bin/activate  # On Windows: env\Scripts\activate
-    ```
+### Data Preprocessing:
 
-3. **Install Required Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+- **Time-series Analysis**: Organize and analyze the traffic flow data to identify patterns over time.
+- **Normalization**: Normalize the data to ensure stable model training.
+- **Reshape Data**: Format the data to fit the input requirements of the LSTM model.
 
-4. **Download the Model and Data**:
-    - Place the pre-trained LSTM model `Traffic_Flow_LSTM_Model.h5` in the project root directory.
-    - Organize your CSV files in a directory named `data/`, following the naming convention `Road_X_YYYY-MM-DD.csv`.
+### Model Architecture:
 
-5. **Run the Streamlit Application**:
-    ```bash
-    streamlit run app.py
-    ```
+- **LSTM Layers**: Use LSTM layers to capture temporal dependencies in the traffic data.
+- **Dense Layers**: Follow LSTM layers with dense layers to perform the final prediction.
 
-## Usage
+### Training:
 
-1. Open the Streamlit application in your web browser.
-2. Select a road from the dropdown menu.
-3. Enter a date in the format `YYYY-MM-DD`.
-4. Click the button to receive the predicted traffic flow for the selected road and date.
-5. View the prediction result, including the predicted traffic flow value.
+- **Data Splitting**: Split the dataset into training and validation sets.
+- **Techniques**: Use techniques like early stopping and dropout to prevent overfitting and improve generalization.
 
-## Data
+### Evaluation:
 
-The application uses historical traffic flow data stored in CSV files. Each file corresponds to a specific road and date. Ensure that the CSV files are named according to the format `Road_X_YYYY-MM-DD.csv` and placed in the `data/` directory.
+- **Performance Metrics**: Evaluate the model’s performance using metrics such as Mean Squared Error (MSE) and Mean Absolute Error (MAE).
+- **Validation**: Use a validation set to monitor the model’s performance and adjust hyperparameters accordingly.
 
-## Model
+### Deployment:
 
-The LSTM model is trained on time-series traffic data, designed to capture patterns and trends over time. The model is loaded from the `Traffic_Flow_LSTM_Model.h5` file and used to make predictions based on the selected road and date.
+- **Streamlit Application**: Deploy the trained model in a Streamlit app where users can select a road and input a date to get real-time traffic flow predictions.
 
-## Logging
+## Data Source
 
-The application logs user interactions and system events to a file named `app.log`. This is useful for monitoring application usage and diagnosing issues.
+The traffic flow data used in this project comes from a collection of CSV files, each representing traffic data for a specific road and date. These datasets are essential for training and evaluating the LSTM model.
 
-## Feedback
+## Streamlit App
 
-Users can provide feedback directly through the application interface. This feedback is logged for further analysis.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request with your changes. Make sure to follow the project's coding guidelines.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
-## Contact
-
-For questions or suggestions, please contact [your email address].
+Once the model is trained, it will be deployed using Streamlit, allowing users to interact with the model through a simple web interface. Users can select a road, input a date, and receive a traffic flow prediction.
