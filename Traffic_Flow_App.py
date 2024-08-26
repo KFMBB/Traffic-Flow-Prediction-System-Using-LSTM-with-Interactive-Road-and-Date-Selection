@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import plotly.graph_objects as go
-from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
 
+# Load models
 @st.cache_resource
 def load_models():
     models = {
@@ -19,30 +20,18 @@ def load_models():
 
 models = load_models()
 
-def calculate_traffic_status(predictions):
-    kmeans = KMeans(n_clusters=5, random_state=0)
-    kmeans.fit(predictions.reshape(-1, 1))
-    thresholds = sorted(kmeans.cluster_centers_.flatten())
-    return thresholds
-
-def predict_and_classify(road, time_series_data):
+# Prediction and classification
+def predict_and_classify(road, time_series_data, scaler):
     model = models[road]
     prediction = model.predict(time_series_data)
 
-    thresholds = calculate_traffic_status(prediction)
-
-    if prediction[-1] <= thresholds[0]:
-        traffic_status = "Free Flow"
-    elif prediction[-1] <= thresholds[1]:
-        traffic_status = "Light Traffic"
-    elif prediction[-1] <= thresholds[2]:
-        traffic_status = "Moderate Traffic"
-    elif prediction[-1] <= thresholds[3]:
-        traffic_status = "Heavy Traffic"
+    # Rescale the predictions if the data was scaled
+    if scaler:
+        prediction_rescaled = scaler.inverse_transform(prediction)
     else:
-        traffic_status = "Severe Congestion"
+        prediction_rescaled = prediction
 
-    return prediction, traffic_status
+    return prediction_rescaled
 
 # Function to load the data for the selected road
 def load_data(road, window_hours=12):
@@ -61,6 +50,7 @@ def load_data(road, window_hours=12):
 
     return filtered_data, current_time
 
+# Streamlit App Interface
 st.title("Traffic Insights and Prediction Dashboard")
 
 road = st.sidebar.selectbox(
@@ -74,23 +64,27 @@ data, current_time = load_data(road)
 st.write(f"### Road: {road}")
 st.write(f"### Current Date: {datetime.now()}")
 
-# Predict traffic volume for the selected road
-time_series_data = data['hourly_traffic_count'].values.reshape(-1, 1)
+# Scale the data
+scaler = MinMaxScaler()
+time_series_data = scaler.fit_transform(data['hourly_traffic_count'].values.reshape(-1, 1))
+
 if time_series_data.size < 12:  # Ensure there is enough data for prediction
     st.error("Error in prediction: Time series data is insufficient.")
 else:
-    prediction, traffic_status = predict_and_classify(road, time_series_data)
+    prediction_rescaled = predict_and_classify(road, time_series_data, scaler)
 
-    # Display prediction and traffic status
-    st.write(f"#### Predicted Traffic Volume: {prediction[-1][0]:.2f}")
-    st.write(f"#### Traffic Status: {traffic_status}")
+    # Debugging information
+    st.write("Prediction shape:", prediction_rescaled.shape)
+    st.write("Prediction values:", prediction_rescaled.flatten())
 
     # Plot actual vs predicted traffic volume using Plotly
     st.write("#### Actual vs Predicted Traffic Volume")
     fig = go.Figure()
 
+    prediction_time_index = data.index[-len(prediction_rescaled):]
+
     fig.add_trace(go.Scatter(x=data.index, y=data['hourly_traffic_count'], mode='lines', name='Actual'))
-    fig.add_trace(go.Scatter(x=data.index, y=np.concatenate(prediction), mode='lines', name='Predicted'))
+    fig.add_trace(go.Scatter(x=prediction_time_index, y=prediction_rescaled.flatten(), mode='lines', name='Predicted'))
 
     fig.update_layout(
         title='Actual vs Predicted Traffic Volume',
@@ -100,44 +94,3 @@ else:
     )
 
     st.plotly_chart(fig)
-
-    # Display metrics
-    st.write("#### Traffic Insights and Metrics")
-    avg_actual = data['hourly_traffic_count'].mean()
-    avg_predicted = np.concatenate(prediction).mean()
-    peak_actual = data['hourly_traffic_count'].max()
-    peak_predicted = np.concatenate(prediction).max()
-
-    st.metric("Average hourly_traffic_count", f"{avg_actual:.2f}")
-    st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
-    st.metric("Peak hourly_traffic_count", f"{peak_actual}")
-    st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
-
-    # Display prediction error analysis using Plotly
-    st.write("#### Prediction Error Analysis")
-    data['Predicted Traffic Volume'] = np.concatenate(prediction)
-    data['Error'] = data['hourly_traffic_count'] - data['Predicted Traffic Volume']
-    fig = go.Figure()
-
-    fig.add_trace(go.Histogram(x=data['Error'], nbinsx=50, histfunc='count', name='Error Distribution'))
-
-    fig.update_layout(
-        title='Prediction Error Distribution',
-        xaxis_title='Error (Actual - Predicted)',
-        yaxis_title='Frequency'
-    )
-
-    st.plotly_chart(fig)
-
-    # Model performance summary
-    st.write("#### Model Performance Summary")
-    mae = np.mean(np.abs(data['Error']))
-    mse = np.mean(data['Error'] ** 2)
-    rmse = np.sqrt(mse)
-
-    st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
-    st.metric("Mean Squared Error (MSE)", f"{mse:.2f}")
-    st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
-    st.write("Prediction shape:", prediction_rescaled.shape)
-    st.write("Prediction values:", prediction_rescaled.flatten())
-
