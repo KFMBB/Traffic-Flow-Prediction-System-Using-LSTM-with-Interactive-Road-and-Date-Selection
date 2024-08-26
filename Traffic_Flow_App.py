@@ -3,10 +3,8 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import plotly.graph_objects as go
-import seaborn as sns
 from sklearn.cluster import KMeans
 from datetime import datetime, timedelta
-
 
 # Load Models for Each Road
 @st.cache_resource
@@ -20,9 +18,7 @@ def load_models():
     }
     return models
 
-
 models = load_models()
-
 
 # Set thresholds for classification using KMeans
 def calculate_traffic_status(predictions):
@@ -30,7 +26,6 @@ def calculate_traffic_status(predictions):
     kmeans.fit(predictions.reshape(-1, 1))
     thresholds = sorted(kmeans.cluster_centers_.flatten())
     return thresholds
-
 
 # Predict Traffic Volume and Classify Status
 def predict_and_classify(road, time_series_data):
@@ -52,10 +47,9 @@ def predict_and_classify(road, time_series_data):
 
     return prediction, traffic_status
 
-
 # Function to load the data for the selected road
 def load_data(road, current_time):
-    file_path = f'Roads_T5/{road.replace(" ", "_")}.csv'
+    file_path = f'Roads/{road.replace(" ", "_")}.csv'
     data = pd.read_csv(file_path, parse_dates=['Date'])
 
     # Filter data within the range of 2 hours before the current time
@@ -64,7 +58,6 @@ def load_data(road, current_time):
     data = data.set_index('Date')
 
     return data
-
 
 # Streamlit App
 st.title("Traffic Insights and Prediction Dashboard")
@@ -96,12 +89,17 @@ st.write(f"#### Traffic Status: {traffic_status}")
 # Plot actual vs predicted traffic volume using Plotly
 st.write("#### Actual vs Predicted Traffic Volume")
 fig = go.Figure()
+
 fig.add_trace(go.Scatter(x=data.index, y=data['Actual Traffic Volume'], mode='lines', name='Actual'))
 fig.add_trace(go.Scatter(x=data.index, y=data['Predicted Traffic Volume'], mode='lines', name='Predicted'))
-fig.update_layout(title='Actual vs Predicted Traffic Volume',
-                  xaxis_title='Date',
-                  yaxis_title='Traffic Volume',
-                  xaxis_tickangle=-45)
+
+fig.update_layout(
+    title='Actual vs Predicted Traffic Volume',
+    xaxis_title='Date',
+    yaxis_title='Traffic Volume',
+    xaxis=dict(tickformat='%Y-%m-%d %H:%M', tickangle=-45),
+)
+
 st.plotly_chart(fig)
 
 # Display metrics
@@ -120,10 +118,15 @@ st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
 st.write("#### Prediction Error Analysis")
 data['Error'] = data['Actual Traffic Volume'] - data['Predicted Traffic Volume']
 fig = go.Figure()
-fig.add_trace(go.Histogram(x=data['Error'], nbinsx=30, histnorm='probability density', name='Error Distribution'))
-fig.update_layout(title='Prediction Error Distribution',
-                  xaxis_title='Error (Actual - Predicted)',
-                  yaxis_title='Density')
+
+fig.add_trace(go.Histogram(x=data['Error'], nbinsx=50, histfunc='count', name='Error Distribution'))
+
+fig.update_layout(
+    title='Prediction Error Distribution',
+    xaxis_title='Error (Actual - Predicted)',
+    yaxis_title='Frequency'
+)
+
 st.plotly_chart(fig)
 
 # Model performance summary
