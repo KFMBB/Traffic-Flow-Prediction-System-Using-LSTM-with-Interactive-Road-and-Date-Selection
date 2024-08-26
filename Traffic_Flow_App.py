@@ -27,12 +27,8 @@ def calculate_traffic_status(predictions):
 
 def predict_and_classify(road, time_series_data):
     model = models[road]
-    
     prediction = model.predict(time_series_data)
 
-    if len(prediction.shape) > 1 and prediction.shape[1] == 1:
-        prediction = prediction.flatten()
-        
     thresholds = calculate_traffic_status(prediction)
 
     if prediction[-1] <= thresholds[0]:
@@ -93,11 +89,8 @@ else:
     st.write("#### Actual vs Predicted Traffic Volume")
     fig = go.Figure()
 
-    prediction = prediction.flatten()
-    prediction_time_index = data.index[-len(prediction):] 
-
     fig.add_trace(go.Scatter(x=data.index, y=data['hourly_traffic_count'], mode='lines', name='Actual'))
-    fig.add_trace(go.Scatter(x=prediction_time_index, y=prediction, mode='lines', name='Predicted'))
+    fig.add_trace(go.Scatter(x=data.index, y=np.concatenate(prediction), mode='lines', name='Predicted'))
 
     fig.update_layout(
         title='Actual vs Predicted Traffic Volume',
