@@ -51,3 +51,4 @@ The traffic flow data used in this project comes from a collection of CSV files,
 ## Streamlit App
 
 Once the model is trained, it will be deployed using Streamlit, allowing users to interact with the model through a simple web interface. Users can select a road, input a date, and receive a traffic flow prediction.
+Source: https://trafficflowforecast0bask.streamlit.app/
