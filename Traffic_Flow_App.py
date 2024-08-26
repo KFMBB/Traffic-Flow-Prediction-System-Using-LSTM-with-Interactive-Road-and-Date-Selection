@@ -75,7 +75,7 @@ data, current_time = load_data(road)
 
 # Display the selected road and the current date range (last 12 hours)
 st.write(f"### Road: {road}")
-st.write(f"### Date Range: {data.index.min()} to {data.index.max()}")
+st.write(f"### Current Date: {datetime.now()}")
 
 # Predict traffic volume for the selected road
 time_series_data = data['hourly_traffic_count'].values.reshape(-1, 1)
