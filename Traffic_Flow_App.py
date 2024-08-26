@@ -138,3 +138,6 @@ else:
     st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
     st.metric("Mean Squared Error (MSE)", f"{mse:.2f}")
     st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
+    st.write("Prediction shape:", prediction_rescaled.shape)
+    st.write("Prediction values:", prediction_rescaled.flatten())
+
