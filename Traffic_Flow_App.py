@@ -29,23 +29,34 @@ def calculate_traffic_status(predictions):
 
 # Predict Traffic Volume and Classify Status
 def predict_and_classify(road, time_series_data):
-    model = models[road]
-    prediction = model.predict(time_series_data)
+    try:
+        model = models[road]
+        # Ensure time_series_data is not empty and has the correct shape
+        if time_series_data.size == 0:
+            raise ValueError("Time series data is empty.")
+        prediction = model.predict(time_series_data)
+        prediction = np.array(prediction).flatten()  # Ensure predictions are in 1D array
 
-    thresholds = calculate_traffic_status(prediction)
+        if prediction.size == 0:
+            raise ValueError("Prediction is empty.")
 
-    if prediction[-1] <= thresholds[0]:
-        traffic_status = "Very Low Traffic"
-    elif prediction[-1] <= thresholds[1]:
-        traffic_status = "Low Traffic"
-    elif prediction[-1] <= thresholds[2]:
-        traffic_status = "Moderate Traffic"
-    elif prediction[-1] <= thresholds[3]:
-        traffic_status = "High Traffic"
-    else:
-        traffic_status = "Very High Traffic"
+        thresholds = calculate_traffic_status(prediction)
+        
+        if prediction[-1] <= thresholds[0]:
+            traffic_status = "Very Low Traffic"
+        elif prediction[-1] <= thresholds[1]:
+            traffic_status = "Low Traffic"
+        elif prediction[-1] <= thresholds[2]:
+            traffic_status = "Moderate Traffic"
+        elif prediction[-1] <= thresholds[3]:
+            traffic_status = "High Traffic"
+        else:
+            traffic_status = "Very High Traffic"
 
-    return prediction, traffic_status
+        return prediction, traffic_status
+    except Exception as e:
+        st.error(f"Error in prediction: {str(e)}")
+        return np.array([]), "Error"
 
 # Function to load the data for the selected road
 def load_data(road, current_time):
@@ -83,59 +94,62 @@ time_series_data = data['hourly_traffic_count'].values.reshape(-1, 1)
 prediction, traffic_status = predict_and_classify(road, time_series_data)
 
 # Display prediction and traffic status
-st.write(f"#### Predicted Traffic Volume: {prediction[-1][0]:.2f}")
-st.write(f"#### Traffic Status: {traffic_status}")
+if prediction.size > 0:
+    st.write(f"#### Predicted Traffic Volume: {prediction[-1]:.2f}")
+    st.write(f"#### Traffic Status: {traffic_status}")
 
-# Plot actual vs predicted traffic volume using Plotly
-st.write("#### Actual vs Predicted Traffic Volume")
-fig = go.Figure()
+    # Plot actual vs predicted traffic volume using Plotly
+    st.write("#### Actual vs Predicted Traffic Volume")
+    fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=data.index, y=data['hourly_traffic_count'], mode='lines', name='Actual'))
-fig.add_trace(go.Scatter(x=data.index, y=np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction]), mode='lines', name='Predicted'))
+    fig.add_trace(go.Scatter(x=data.index, y=data['hourly_traffic_count'], mode='lines', name='Actual'))
+    fig.add_trace(go.Scatter(x=data.index, y=np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction]), mode='lines', name='Predicted'))
 
-fig.update_layout(
-    title='Actual vs Predicted Traffic Volume',
-    xaxis_title='Date',
-    yaxis_title='Traffic Volume',
-    xaxis=dict(tickformat='%Y-%m-%d %H:%M', tickangle=-45),
-)
+    fig.update_layout(
+        title='Actual vs Predicted Traffic Volume',
+        xaxis_title='Date',
+        yaxis_title='Traffic Volume',
+        xaxis=dict(tickformat='%Y-%m-%d %H:%M', tickangle=-45),
+    )
 
-st.plotly_chart(fig)
+    st.plotly_chart(fig)
 
-# Display metrics
-st.write("#### Traffic Insights and Metrics")
-avg_actual = data['hourly_traffic_count'].mean()
-avg_predicted = np.mean(prediction)
-peak_actual = data['hourly_traffic_count'].max()
-peak_predicted = np.max(prediction)
+    # Display metrics
+    st.write("#### Traffic Insights and Metrics")
+    avg_actual = data['hourly_traffic_count'].mean()
+    avg_predicted = np.mean(prediction)
+    peak_actual = data['hourly_traffic_count'].max()
+    peak_predicted = np.max(prediction)
 
-st.metric("Average hourly_traffic_count", f"{avg_actual:.2f}")
-st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
-st.metric("Peak hourly_traffic_count", f"{peak_actual}")
-st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
+    st.metric("Average hourly_traffic_count", f"{avg_actual:.2f}")
+    st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
+    st.metric("Peak hourly_traffic_count", f"{peak_actual}")
+    st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
 
-# Display prediction error analysis using Plotly
-st.write("#### Prediction Error Analysis")
-data['Predicted Traffic Volume'] = np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction])
-data['Error'] = data['hourly_traffic_count'] - data['Predicted Traffic Volume']
-fig = go.Figure()
+    # Display prediction error analysis using Plotly
+    st.write("#### Prediction Error Analysis")
+    data['Predicted Traffic Volume'] = np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction])
+    data['Error'] = data['hourly_traffic_count'] - data['Predicted Traffic Volume']
+    fig = go.Figure()
 
-fig.add_trace(go.Histogram(x=data['Error'].dropna(), nbinsx=50, histfunc='count', name='Error Distribution'))
+    fig.add_trace(go.Histogram(x=data['Error'].dropna(), nbinsx=50, histfunc='count', name='Error Distribution'))
 
-fig.update_layout(
-    title='Prediction Error Distribution',
-    xaxis_title='Error (Actual - Predicted)',
-    yaxis_title='Frequency'
-)
+    fig.update_layout(
+        title='Prediction Error Distribution',
+        xaxis_title='Error (Actual - Predicted)',
+        yaxis_title='Frequency'
+    )
 
-st.plotly_chart(fig)
+    st.plotly_chart(fig)
 
-# Model performance summary
-st.write("#### Model Performance Summary")
-mae = np.mean(np.abs(data['Error'].dropna()))
-mse = np.mean(data['Error'].dropna() ** 2)
-rmse = np.sqrt(mse)
+    # Model performance summary
+    st.write("#### Model Performance Summary")
+    mae = np.mean(np.abs(data['Error'].dropna()))
+    mse = np.mean(data['Error'].dropna() ** 2)
+    rmse = np.sqrt(mse)
 
-st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
-st.metric("Mean Squared Error (MSE)", f"{mse:.2f}")
-st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
+    st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
+    st.metric("Mean Squared Error (MSE)", f"{mse:.2f}")
+    st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
+else:
+    st.write("No valid predictions available.")
