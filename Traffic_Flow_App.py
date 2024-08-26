@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import seaborn as sns
 from sklearn.cluster import KMeans
 from datetime import datetime, timedelta
@@ -93,14 +93,16 @@ prediction, traffic_status = predict_and_classify(road, time_series_data)
 st.write(f"#### Predicted Traffic Volume: {prediction[-1][0]:.2f}")
 st.write(f"#### Traffic Status: {traffic_status}")
 
-# Plot actual vs predicted traffic volume
+# Plot actual vs predicted traffic volume using Plotly
 st.write("#### Actual vs Predicted Traffic Volume")
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.lineplot(data=data, x=data.index, y='Actual Traffic Volume', label='Actual', ax=ax)
-sns.lineplot(data=data, x=data.index, y='Predicted Traffic Volume', label='Predicted', ax=ax)
-plt.xticks(rotation=45)
-plt.tight_layout()
-st.pyplot(fig)
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=data.index, y=data['Actual Traffic Volume'], mode='lines', name='Actual'))
+fig.add_trace(go.Scatter(x=data.index, y=data['Predicted Traffic Volume'], mode='lines', name='Predicted'))
+fig.update_layout(title='Actual vs Predicted Traffic Volume',
+                  xaxis_title='Date',
+                  yaxis_title='Traffic Volume',
+                  xaxis_tickangle=-45)
+st.plotly_chart(fig)
 
 # Display metrics
 st.write("#### Traffic Insights and Metrics")
@@ -114,16 +116,15 @@ st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
 st.metric("Peak Actual Traffic Volume", f"{peak_actual}")
 st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
 
-# Display prediction error analysis
+# Display prediction error analysis using Plotly
 st.write("#### Prediction Error Analysis")
 data['Error'] = data['Actual Traffic Volume'] - data['Predicted Traffic Volume']
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.histplot(data['Error'], kde=True, ax=ax)
-plt.title("Prediction Error Distribution")
-plt.xlabel("Error (Actual - Predicted)")
-plt.ylabel("Frequency")
-plt.tight_layout()
-st.pyplot(fig)
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=data['Error'], nbinsx=30, histnorm='probability density', name='Error Distribution'))
+fig.update_layout(title='Prediction Error Distribution',
+                  xaxis_title='Error (Actual - Predicted)',
+                  yaxis_title='Density')
+st.plotly_chart(fig)
 
 # Model performance summary
 st.write("#### Model Performance Summary")
