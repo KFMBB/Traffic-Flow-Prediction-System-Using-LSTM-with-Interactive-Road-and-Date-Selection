@@ -3,7 +3,6 @@ tensorflow
 pandas
 numpy
 seaborn
-matplotlib
 scikit-learn
 altair
 plotly
