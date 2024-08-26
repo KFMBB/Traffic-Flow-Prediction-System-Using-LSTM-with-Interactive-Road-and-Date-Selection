@@ -83,7 +83,7 @@ else:
 
     # Display prediction and traffic status
     st.write(f"#### Predicted Traffic Volume: {prediction[-1][0]:.2f}")
-    st.write(f"#### Traffic Status: {traffic_status}")
+    st.write(f"#### Traffic Status for the next hour: {traffic_status}")
 
     # Plot actual vs predicted traffic volume using Plotly
     st.write("#### Actual vs Predicted Traffic Volume")
