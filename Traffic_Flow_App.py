@@ -1,77 +1,130 @@
 import streamlit as st
-import tensorflow as tf
 import pandas as pd
 import numpy as np
-import logging
-import os
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
 
-logging.basicConfig(filename='app.log', level=logging.INFO)
-
+# Load Models for Each Road
 @st.cache_resource
-def load_model():
-    model = tf.keras.models.load_model('Traffic_Flow_LSTM_Model.h5')
-    return model
+def load_models():
+    models = {
+        'King Fahad Road': tf.keras.models.load_model('King_Fahad_Road_Model.h5'),
+        'King Khaled Road': tf.keras.models.load_model('King_Khaled_Road_Model.h5'),
+        'King Salman Road': tf.keras.models.load_model('King_Salman_Road_Model.h5'),
+        'Northern Ring Road': tf.keras.models.load_model('Northern_Ring_Road_Model.h5'),
+        'King Abdullah Road': tf.keras.models.load_model('King_Abdullah_Road_Model.h5'),
+    }
+    return models
 
-model = load_model()
+models = load_models()
 
-st.title("Traffic Flow Prediction System")
+# Set thresholds for classification using KMeans
+def calculate_traffic_status(predictions):
+    kmeans = KMeans(n_clusters=5, random_state=0)
+    kmeans.fit(predictions.reshape(-1, 1))
+    thresholds = sorted(kmeans.cluster_centers_.flatten())
+    return thresholds
 
-# Dropdown menu for selecting a road
-road_list = [f"Road {i}" for i in range(1, 37)]  # Assuming roads are labeled as "Road 1" to "Road 36"
-selected_road = st.selectbox("Select a Road", road_list)
+# Predict Traffic Volume and Classify Status
+def predict_and_classify(road, time_series_data):
+    model = models[road]
+    prediction = model.predict(time_series_data)
+    
+    thresholds = calculate_traffic_status(prediction)
+    
+    if prediction <= thresholds[0]:
+        traffic_status = "Very Low Traffic"
+    elif prediction <= thresholds[1]:
+        traffic_status = "Low Traffic"
+    elif prediction <= thresholds[2]:
+        traffic_status = "Moderate Traffic"
+    elif prediction <= thresholds[3]:
+        traffic_status = "High Traffic"
+    else:
+        traffic_status = "Very High Traffic"
+    
+    return prediction, traffic_status
 
-# Input field for selecting a date
-st.write("Please enter the date in the format YYYY-MM-DD.")
-selected_date = st.text_input("Select a Date", placeholder="YYYY-MM-DD")
+# Function to load the data for the selected road
+def load_data(road, start_date, end_date):
+    # Placeholder function to simulate data loading
+    # Replace with actual data loading code
+    dates = pd.date_range(start=start_date, end=end_date, freq='H')
+    data = pd.DataFrame({
+        'Date': dates,
+        'Actual Traffic Volume': np.random.randint(100, 500, len(dates)),
+        'Predicted Traffic Volume': np.random.randint(100, 500, len(dates))
+    })
+    return data
 
-# Validate the date format (basic validation)
-def validate_date(date_text):
-    try:
-        pd.to_datetime(date_text, format='%Y-%m-%d')
-        return True
-    except ValueError:
-        return False
+# Streamlit App
+st.title("Traffic Insights and Prediction Dashboard")
 
-if selected_date and validate_date(selected_date):
-    # Assuming you have a method to map the selected road and date to a CSV file
-    def get_csv_for_road_and_date(road, date):
-        # Example: Assuming the CSVs are named as 'Road_X_YYYY-MM-DD.csv'
-        csv_filename = f"data/{road}_{date}.csv"
-        if os.path.exists(csv_filename):
-            return csv_filename
-        else:
-            st.error("Data not available for the selected road and date.")
-            return None
+# Sidebar for road selection
+road = st.sidebar.selectbox(
+    "Select a Road",
+    list(models.keys())
+)
 
-    csv_file = get_csv_for_road_and_date(selected_road, selected_date)
+# Date range selection
+start_date = st.sidebar.date_input("Start Date")
+end_date = st.sidebar.date_input("End Date")
 
-    if csv_file:
-        df = pd.read_csv(csv_file)
-        st.write("Preview of selected data:")
-        st.dataframe(df.head())
+# Load the data
+data = load_data(road, start_date, end_date)
 
-        def preprocess_data(data):
-            try:
-                data = data.values
-                data = data.reshape((1, data.shape[0], data.shape[1]))
-                return data
-            except Exception as e:
-                logging.error(f"Error in preprocess_data: {e}")
-                return None
+# Display the selected road and date range
+st.write(f"### Road: {road}")
+st.write(f"### Date Range: {start_date} to {end_date}")
 
-        with st.spinner('Processing...'):
-            processed_data = preprocess_data(df)
-            if processed_data is not None:
-                prediction = model.predict(processed_data)
-                st.success(f"Predicted Traffic Flow: {prediction[0][0]:.2f}")
-                logging.info(f"User selected {selected_road} on {selected_date}. Prediction: {prediction[0][0]:.2f}")
-            else:
-                st.error("Error in processing data.")
-else:
-    if selected_date:
-        st.error("Please enter a valid date in the format YYYY-MM-DD.")
+# Predict traffic volume for the selected road and date range
+time_series_data = data['Actual Traffic Volume'].values.reshape(-1, 1)
+prediction, traffic_status = predict_and_classify(road, time_series_data)
 
-feedback = st.text_input("Provide feedback:")
-if st.button("Submit Feedback"):
-    st.success("Thank you for your feedback!")
-    logging.info(f"User feedback: {feedback}")
+# Display prediction and traffic status
+st.write(f"#### Predicted Traffic Volume: {prediction[0][0]:.2f}")
+st.write(f"#### Traffic Status: {traffic_status}")
+
+# Plot actual vs predicted traffic volume
+st.write("#### Actual vs Predicted Traffic Volume")
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.lineplot(data=data, x='Date', y='Actual Traffic Volume', label='Actual', ax=ax)
+sns.lineplot(data=data, x='Date', y='Predicted Traffic Volume', label='Predicted', ax=ax)
+plt.xticks(rotation=45)
+plt.tight_layout()
+st.pyplot(fig)
+
+# Display metrics
+st.write("#### Traffic Insights and Metrics")
+avg_actual = data['Actual Traffic Volume'].mean()
+avg_predicted = data['Predicted Traffic Volume'].mean()
+peak_actual = data['Actual Traffic Volume'].max()
+peak_predicted = data['Predicted Traffic Volume'].max()
+
+st.metric("Average Actual Traffic Volume", f"{avg_actual:.2f}")
+st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
+st.metric("Peak Actual Traffic Volume", f"{peak_actual}")
+st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
+
+# Display prediction error analysis
+st.write("#### Prediction Error Analysis")
+data['Error'] = data['Actual Traffic Volume'] - data['Predicted Traffic Volume']
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.histplot(data['Error'], kde=True, ax=ax)
+plt.title("Prediction Error Distribution")
+plt.xlabel("Error (Actual - Predicted)")
+plt.ylabel("Frequency")
+plt.tight_layout()
+st.pyplot(fig)
+
+# Model performance summary
+st.write("#### Model Performance Summary")
+mae = np.mean(np.abs(data['Error']))
+mse = np.mean(data['Error']**2)
+rmse = np.sqrt(mse)
+
+st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
+st.metric("Mean Squared Error (MSE)", f"{mse:.2f}")
+st.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}")
