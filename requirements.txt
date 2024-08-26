@@ -3,7 +3,6 @@ tensorflow
 pandas
 pillow
 numpy
-matplotlib
 seaborn
 scikit-learn
 altair==4.1.0
