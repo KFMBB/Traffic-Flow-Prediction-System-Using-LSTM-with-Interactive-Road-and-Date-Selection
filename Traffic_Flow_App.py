@@ -79,7 +79,7 @@ st.write(f"### Road: {road}")
 st.write(f"### Date Range: {current_time - timedelta(hours=2)} to {current_time}")
 
 # Predict traffic volume for the selected road
-time_series_data = data['Actual Traffic Volume'].values.reshape(-1, 1)
+time_series_data = data['hourly_traffic_count'].values.reshape(-1, 1)
 prediction, traffic_status = predict_and_classify(road, time_series_data)
 
 # Display prediction and traffic status
@@ -90,7 +90,7 @@ st.write(f"#### Traffic Status: {traffic_status}")
 st.write("#### Actual vs Predicted Traffic Volume")
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=data.index, y=data['Actual Traffic Volume'], mode='lines', name='Actual'))
+fig.add_trace(go.Scatter(x=data.index, y=data[''], mode='lines', name='Actual'))
 fig.add_trace(go.Scatter(x=data.index, y=data['Predicted Traffic Volume'], mode='lines', name='Predicted'))
 
 fig.update_layout(
@@ -104,19 +104,19 @@ st.plotly_chart(fig)
 
 # Display metrics
 st.write("#### Traffic Insights and Metrics")
-avg_actual = data['Actual Traffic Volume'].mean()
+avg_actual = data[''].mean()
 avg_predicted = data['Predicted Traffic Volume'].mean()
-peak_actual = data['Actual Traffic Volume'].max()
+peak_actual = data[''].max()
 peak_predicted = data['Predicted Traffic Volume'].max()
 
-st.metric("Average Actual Traffic Volume", f"{avg_actual:.2f}")
+st.metric("Average hourly_traffic_count", f"{avg_actual:.2f}")
 st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
-st.metric("Peak Actual Traffic Volume", f"{peak_actual}")
+st.metric("Peak hourly_traffic_count", f"{peak_actual}")
 st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
 
 # Display prediction error analysis using Plotly
 st.write("#### Prediction Error Analysis")
-data['Error'] = data['Actual Traffic Volume'] - data['Predicted Traffic Volume']
+data['Error'] = data['hourly_traffic_count'] - data['Predicted Traffic Volume']
 fig = go.Figure()
 
 fig.add_trace(go.Histogram(x=data['Error'], nbinsx=50, histfunc='count', name='Error Distribution'))
