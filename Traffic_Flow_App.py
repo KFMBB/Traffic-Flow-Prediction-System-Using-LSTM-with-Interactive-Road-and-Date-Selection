@@ -48,17 +48,17 @@ def predict_and_classify(road, time_series_data):
     return prediction, traffic_status
 
 # Function to load the data for the selected road
-def load_data(road):
+def load_data(road, window_hours=12):
     file_path = f'Roads_T5/{road.replace(" ", "_")}.csv'
     data = pd.read_csv(file_path, parse_dates=['timestamp'])
 
     # Define the current time as the latest available date in the data
     current_time = data['timestamp'].max()
 
-    # Define the date range for filtering (2 hours before the current time)
-    start_time = current_time - timedelta(hours=2)
+    # Define the date range for filtering (window_hours before the current time)
+    start_time = current_time - timedelta(hours=window_hours)
     
-    # Filter data within the range of 2 hours before the current time
+    # Filter data within the range of the prediction window
     filtered_data = data[(data['timestamp'] >= start_time) & (data['timestamp'] <= current_time)]
     filtered_data = filtered_data.set_index('timestamp')
 
@@ -73,14 +73,14 @@ road = st.sidebar.selectbox(
 
 data, current_time = load_data(road)
 
-# Display the selected road and the current date range (last 2 hours)
+# Display the selected road and the current date range (last 12 hours)
 st.write(f"### Road: {road}")
-st.write(f"### Date Range: {current_time - timedelta(hours=2)} to {current_time}")
+st.write(f"### Date Range: {data.index.min()} to {data.index.max()}")
 
 # Predict traffic volume for the selected road
 time_series_data = data['hourly_traffic_count'].values.reshape(-1, 1)
-if time_series_data.size == 0:
-    st.error("Error in prediction: Time series data is empty.")
+if time_series_data.size < 12:  # Ensure there is enough data for prediction
+    st.error("Error in prediction: Time series data is insufficient.")
 else:
     prediction, traffic_status = predict_and_classify(road, time_series_data)
 
