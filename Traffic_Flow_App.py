@@ -27,7 +27,11 @@ def calculate_traffic_status(predictions):
 
 def predict_and_classify(road, time_series_data):
     model = models[road]
+
+    time_series_data = time_series_data.reshape(-1, 1)
+    
     prediction = model.predict(time_series_data)
+
 
     thresholds = calculate_traffic_status(prediction)
 
