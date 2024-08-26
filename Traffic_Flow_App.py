@@ -5,6 +5,7 @@ import tensorflow as tf
 import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from datetime import datetime, timedelta
+from tensorflow.keras.utils import timeseries_dataset_from_array
 
 @st.cache_resource
 def load_models():
@@ -27,7 +28,10 @@ def calculate_traffic_status(predictions):
 
 def predict_and_classify(road, time_series_data):
     model = models[road]
-    prediction = model.predict(time_series_data)
+    win = 12
+    time_series_data_1 = timeseries_dataset_from_array(time_series_data, targets=time_series_data[win:], sequence_length=win)
+
+    prediction = model.predict(time_series_data_1)
 
     thresholds = calculate_traffic_status(prediction)
 
