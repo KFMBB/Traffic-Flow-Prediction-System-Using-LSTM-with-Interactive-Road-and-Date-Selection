@@ -54,8 +54,8 @@ def load_data(road, current_time):
 
     # Filter data within the range of 2 hours before the current time
     start_time = current_time - timedelta(hours=2)
-    data = data[(data['Date'] >= start_time) & (data['Date'] <= current_time)]
-    data = data.set_index('Date')
+    data = data[(data['timestamp'] >= start_time) & (data['timestamp'] <= current_time)]
+    data = data.set_index('timestamp')
 
     return data
 
