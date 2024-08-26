@@ -12,11 +12,11 @@ from datetime import datetime, timedelta
 @st.cache_resource
 def load_models():
     models = {
-        'King Fahad Road': tf.keras.models.load_model('models/King_Fahad_Road_Model.keras'),
-        'King Khaled Road': tf.keras.models.load_model('models/King_Khaled_Road_Model.keras'),
-        'King Salman Road': tf.keras.models.load_model('models/King_Salman_Road_Model.keras'),
-        'Northern Ring Road': tf.keras.models.load_model('models/Northern_Ring_Road_Model.keras'),
-        'King Abdullah Road': tf.keras.models.load_model('models/King_Abdullah_Road_Model.keras'),
+        'King Fahad Road': tf.keras.models.load_model('Traffic_Models/King_Fahad_Road_Model.keras'),
+        'King Khaled Road': tf.keras.models.load_model('Traffic_Models/King_Khaled_Road_Model.keras'),
+        'King Salman Road': tf.keras.models.load_model('Traffic_Models/King_Salman_Road_Model.keras'),
+        'Northern Ring Road': tf.keras.models.load_model('Traffic_Models/Northern_Ring_Road_Model.keras'),
+        'King Abdullah Road': tf.keras.models.load_model('Traffic_Models/King_Abdullah_Road_Model.keras'),
     }
     return models
 
@@ -55,7 +55,7 @@ def predict_and_classify(road, time_series_data):
 
 # Function to load the data for the selected road
 def load_data(road, current_time):
-    file_path = f'Roads/{road.replace(" ", "_")}.csv'
+    file_path = f'Roads_T5/{road.replace(" ", "_")}.csv'
     data = pd.read_csv(file_path, parse_dates=['Date'])
 
     # Filter data within the range of 2 hours before the current time
