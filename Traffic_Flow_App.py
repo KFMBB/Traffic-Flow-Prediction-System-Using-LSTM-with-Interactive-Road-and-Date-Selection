@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from datetime import datetime, timedelta
 
-# Load Models for Each Road
 @st.cache_resource
 def load_models():
     models = {
@@ -20,14 +19,12 @@ def load_models():
 
 models = load_models()
 
-# Set thresholds for classification using KMeans
 def calculate_traffic_status(predictions):
     kmeans = KMeans(n_clusters=5, random_state=0)
     kmeans.fit(predictions.reshape(-1, 1))
     thresholds = sorted(kmeans.cluster_centers_.flatten())
     return thresholds
 
-# Predict Traffic Volume and Classify Status
 def predict_and_classify(road, time_series_data):
     model = models[road]
     prediction = model.predict(time_series_data)
