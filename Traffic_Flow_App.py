@@ -10,11 +10,11 @@ from sklearn.cluster import KMeans
 @st.cache_resource
 def load_models():
     models = {
-        'King Fahad Road': tf.keras.models.load_model('King_Fahad_Road_Model.h5'),
-        'King Khaled Road': tf.keras.models.load_model('King_Khaled_Road_Model.h5'),
-        'King Salman Road': tf.keras.models.load_model('King_Salman_Road_Model.h5'),
-        'Northern Ring Road': tf.keras.models.load_model('Northern_Ring_Road_Model.h5'),
-        'King Abdullah Road': tf.keras.models.load_model('King_Abdullah_Road_Model.h5'),
+        'King Fahad Road': tf.keras.models.load_model('King_Fahad_Road_Model.keras'),
+        'King Khaled Road': tf.keras.models.load_model('King_Khaled_Road_Model.keras'),
+        'King Salman Road': tf.keras.models.load_model('King_Salman_Road_Model.keras'),
+        'Northern Ring Road': tf.keras.models.load_model('Northern_Ring_Road_Model.keras'),
+        'King Abdullah Road': tf.keras.models.load_model('King_Abdullah_Road_Model.keras'),
     }
     return models
 
