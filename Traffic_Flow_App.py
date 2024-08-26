@@ -34,13 +34,13 @@ def predict_and_classify(road, time_series_data):
 
     thresholds = calculate_traffic_status(prediction)
 
-    if prediction <= thresholds[0]:
+    if prediction[-1] <= thresholds[0]:
         traffic_status = "Very Low Traffic"
-    elif prediction <= thresholds[1]:
+    elif prediction[-1] <= thresholds[1]:
         traffic_status = "Low Traffic"
-    elif prediction <= thresholds[2]:
+    elif prediction[-1] <= thresholds[2]:
         traffic_status = "Moderate Traffic"
-    elif prediction <= thresholds[3]:
+    elif prediction[-1] <= thresholds[3]:
         traffic_status = "High Traffic"
     else:
         traffic_status = "Very High Traffic"
@@ -90,8 +90,8 @@ st.write(f"#### Traffic Status: {traffic_status}")
 st.write("#### Actual vs Predicted Traffic Volume")
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=data.index, y=data[''], mode='lines', name='Actual'))
-fig.add_trace(go.Scatter(x=data.index, y=data['Predicted Traffic Volume'], mode='lines', name='Predicted'))
+fig.add_trace(go.Scatter(x=data.index, y=data['hourly_traffic_count'], mode='lines', name='Actual'))
+fig.add_trace(go.Scatter(x=data.index, y=np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction]), mode='lines', name='Predicted'))
 
 fig.update_layout(
     title='Actual vs Predicted Traffic Volume',
@@ -104,10 +104,10 @@ st.plotly_chart(fig)
 
 # Display metrics
 st.write("#### Traffic Insights and Metrics")
-avg_actual = data[''].mean()
-avg_predicted = data['Predicted Traffic Volume'].mean()
-peak_actual = data[''].max()
-peak_predicted = data['Predicted Traffic Volume'].max()
+avg_actual = data['hourly_traffic_count'].mean()
+avg_predicted = np.mean(prediction)
+peak_actual = data['hourly_traffic_count'].max()
+peak_predicted = np.max(prediction)
 
 st.metric("Average hourly_traffic_count", f"{avg_actual:.2f}")
 st.metric("Average Predicted Traffic Volume", f"{avg_predicted:.2f}")
@@ -116,10 +116,11 @@ st.metric("Peak Predicted Traffic Volume", f"{peak_predicted}")
 
 # Display prediction error analysis using Plotly
 st.write("#### Prediction Error Analysis")
+data['Predicted Traffic Volume'] = np.concatenate([np.nan*np.ones((len(data)-len(prediction), 1)), prediction])
 data['Error'] = data['hourly_traffic_count'] - data['Predicted Traffic Volume']
 fig = go.Figure()
 
-fig.add_trace(go.Histogram(x=data['Error'], nbinsx=50, histfunc='count', name='Error Distribution'))
+fig.add_trace(go.Histogram(x=data['Error'].dropna(), nbinsx=50, histfunc='count', name='Error Distribution'))
 
 fig.update_layout(
     title='Prediction Error Distribution',
@@ -131,8 +132,8 @@ st.plotly_chart(fig)
 
 # Model performance summary
 st.write("#### Model Performance Summary")
-mae = np.mean(np.abs(data['Error']))
-mse = np.mean(data['Error'] ** 2)
+mae = np.mean(np.abs(data['Error'].dropna()))
+mse = np.mean(data['Error'].dropna() ** 2)
 rmse = np.sqrt(mse)
 
 st.metric("Mean Absolute Error (MAE)", f"{mae:.2f}")
